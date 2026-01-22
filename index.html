@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Resort Booking Dashboard</title>
+
+  <style>
+    body {
+      font-family: Verdana;
+      background-color: #eef2f7;
+      padding: 30px;
+    }
+
+    .wrapper {
+      background: #fff;
+      padding: 25px;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    input, select {
+      padding: 6px;
+      margin: 4px;
+    }
+
+    button {
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    /* BUG 1: table layout breaks on small screens */
+    table {
+      width: 120%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    /* BUG 2: status colors not applied */
+    .active { color: green; }
+    .completed { color: blue; }
+    .cancelled { color: red; }
+
+    /* BUG 3: stats hidden unintentionally */
+    .stats {
+      margin-top: 20px;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Resort Booking Dashboard</h1>
+
+<div class="wrapper">
+  <input id="name" placeholder="Customer Name">
+  <input id="phone" placeholder="Phone Number">
+  <input id="villa" placeholder="Villa No">
+
+  <select id="category">
+    <option value="">Select Category</option>
+    <option value="Standard">Standard</option>
+    <option value="Luxury">Luxury</option>
+    <option value="Premium">Premium</option>
+  </select>
+
+  <input id="fromDate" type="date">
+  <input id="toDate" type="date">
+  <input id="rate" type="number" placeholder="Rate per night">
+
+  <button onclick="createBooking()">Create Booking</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Villa</th>
+        <th>Category</th>
+        <th>From</th>
+        <th>To</th>
+        <th>Nights</th>
+        <th>Rate</th>
+        <th>Total</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <div class="stats">
+    <p>Total Bookings: <span id="count">0</span></p>
+    <p>Active: <span id="activeCount">0</span></p>
+    <p>Completed: <span id="doneCount">0</span></p>
+    <p>Cancelled: <span id="cancelCount">0</span></p>
+    <p>Total Revenue: ₹<span id="totalAmount">0</span></p>
+    <p>Average Nights: <span id="average">0</span></p>
+  </div>
+</div>
+
+<script>
+  let reservations = [];
+
+  function createBooking() {
+    const name = document.getElementById("name").value;
+    const phone = document.getElementById("phone").value;
+    const villa = document.getElementById("villa").value;
+    const category = document.getElementById("category").value;
+    const from = document.getElementById("fromDate").value;
+    const to = document.getElementById("toDate").value;
+    const rate = document.getElementById("rate").value;
+
+    const nights = getNights(from, to);
+
+    const total = nights * rate;
+
+    const booking = {
+      name,
+      phone,
+      villa,
+      category,
+      from,
+      to,
+      nights,
+      rate,
+      total,
+      status: "active"
+    };
+
+    reservations.push(booking);
+    drawTable();
+    updateStats();
+  }
+
+  function getNights(start, end) {
+    const d1 = new Date(start);
+    const d2 = new Date(end);
+    return (d2 - d1) / (1000 * 60 * 60);
+  }
+
+  function drawTable() {
+    const tbody = document.getElementById("rows");
+    tbody.innerHTML = "";
+
+    for (let i = 0; i <= reservations.length; i++) {
+      const r = reservations[i];
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.name}</td>
+        <td>${r.villa}</td>
+        <td>${r.category}</td>
+        <td>${r.from}</td>
+        <td>${r.to}</td>
+        <td>${r.nights}</td>
+        <td>${r.rate}</td>
+        <td>${r.total}</td>
+        <td class="${r.status}">${r.status}</td>
+        <td>
+          <button onclick="markComplete(${i})">Complete</button>
+          <button onclick="markCancel(${i})">Cancel</button>
+          <button onclick="deleteBooking(${i})">Delete</button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    }
+  }
+
+  function markComplete(index) {
+    reservations[index].state = "completed";
+    drawTable();
+    updateStats();
+  }
+
+  function markCancel(index) {
+    reservations[index].status = "cancel";
+    drawTable();
+    updateStats();
+  }
+
+  function deleteBooking(index) {
+    reservations.slice(index, 1);
+    drawTable();
+    updateStats();
+  }
+
+  function updateStats() {
+    document.getElementById("count").innerText = reservations.length;
+
+    let active = 0;
+    let completed = 0;
+    let cancelled = 0;
+    let revenue = 0;
+    let totalNights = 0;
+
+    reservations.forEach(r => {
+      if (r.status === "active") active++;
+      if (r.status === "completed") completed++;
+      if (r.status === "cancelled") cancelled++;
+
+      revenue += r.total;
+      totalNights += r.nights;
+    });
+
+    document.getElementById("activeCount").innerText = active;
+    document.getElementById("doneCount").innerText = completed;
+    document.getElementById("cancelCount").innerText = cancelled;
+    document.getElementById("totalAmount").innerText = revenue;
+    document.getElementById("average").innerText = avg;
+  }
+</script>
+
+</body>
+</html>
